@@ -1,4 +1,5 @@
 const BandList = require("./band/band-list");
+const Marcadores = require("./mapa/marcadores");
 const TicketList = require("./ticket/ticket-list");
 
 class Sockets {
@@ -6,6 +7,7 @@ class Sockets {
     this.io = io;
     this.bandList = new BandList();
     this.ticketList = new TicketList();
+    this.marcadores = new Marcadores();
 
     this.socketEvents();
   }
@@ -17,6 +19,7 @@ class Sockets {
 
       this.EventsBand(socket);
       this.EventsTicket(socket);
+      this.EventsMarcadores(socket);
     });
   }
 
@@ -65,6 +68,24 @@ class Sockets {
 
         this.io.emit("ticket-asignado", this.ticketList.ultimos13);
       });
+  }
+
+  EventsMarcadores(socket){
+    socket.emit('marcadores-activos', this.marcadores.activos);
+
+    socket.on('marcador-nuevo', (marcador) => {
+      this.marcadores.agregarMarcador(marcador);
+
+      //a todos los demas clientes menos el origin
+      socket.broadcast.emit('marcador-nuevo', marcador);
+    })
+
+    socket.on('marcador-actualizado', (marcador) => {
+      console.log(marcador)
+      this.marcadores.actualizarMarcador(marcador);
+
+      socket.broadcast.emit('marcador-actualizado', marcador)
+    })
   }
 }
 
